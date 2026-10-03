@@ -1,0 +1,32 @@
+name: Publish Surge
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: surge
+  cancel-in-progress: true
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Prepare public files only
+        run: |
+          mkdir -p dist
+          cp index.html styles.css app.js .nojekyll dist/
+          cp -R assets dist/assets
+      - name: Publish to Surge
+        env:
+          SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
+        run: |
+          if [ -z "$SURGE_TOKEN" ]; then
+            echo "SURGE_TOKEN is not configured. Add the repository Actions secret to enable deployment."
+            exit 1
+          fi
+          npx --yes surge@0.44.4 ./dist not-love-world-1john2-20261003-v1.surge.sh
